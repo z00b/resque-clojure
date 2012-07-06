@@ -2,9 +2,17 @@
   (:refer-clojure :exclude [name])
   (:use [clojure.string :only [split]]))
 
+(def config (atom {}))
+
+(defn configure [c]
+  (swap! config merge c))
+
 (defn lookup-fn [namespaced-fn]
-  (let [[namespace fun] (split namespaced-fn #"/")]
-    (ns-resolve (symbol namespace) (symbol fun))))
+  (let [handler (:lookup-fn @config)]
+    (if (nil? handler)
+      (let [[namespace fun] (split namespaced-fn #"/")]
+        (ns-resolve (symbol namespace) (symbol fun)))
+      (handler namespaced-fn))))
 
 (defn work-on [state {:keys [func args queue] :as job}]
   (try
